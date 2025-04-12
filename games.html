@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>This or That - Image Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .image-container {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .image-container:hover {
+            transform: scale(1.03);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        .selected {
+            border: 4px solid #3b82f6;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+        .winner-animation {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .progress-bar {
+            transition: width 0.5s ease;
+        }
+        .image-title {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+            color: white;
+            padding: 1rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+        .image-description {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <header class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-6 shadow-lg">
+        <div class="container mx-auto px-4">
+            <h1 class="text-3xl font-bold text-center">THIS OR THAT</h1>
+            <p class="text-center mt-2 opacity-90">Choose your favorite - the winner continues!</p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Game Stats -->
+            <div class="bg-white rounded-lg shadow-md p-4 mb-8">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-medium">Round <span id="round-count">1</span>/10</span>
+                    <span class="font-medium">Score: <span id="score">0</span></span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-4">
+                    <div id="progress-bar" class="progress-bar bg-gradient-to-r from-indigo-500 to-purple-500 h-4 rounded-full" style="width: 10%"></div>
+                </div>
+            </div>
+
+            <!-- Game Area -->
+            <div id="game-area" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Images will be loaded here by JavaScript -->
+            </div>
+
+            <!-- Winner Display (hidden initially) -->
+            <div id="winner-display" class="hidden mt-8 text-center">
+                <h2 class="text-2xl font-bold mb-4">Final Winner!</h2>
+                <div class="max-w-md mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
+                    <img id="final-winner-img" src="" alt="Final Winner" class="w-full h-64 object-cover">
+                    <div class="p-4">
+                        <h3 id="final-winner-title" class="text-xl font-bold mb-1"></h3>
+                        <p id="final-winner-desc" class="text-gray-600 mb-4"></p>
+                        <p class="text-lg mb-4">You chose this as your ultimate favorite!</p>
+                        <button id="play-again" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-full transition transform hover:scale-105">
+                            <i class="fas fa-redo mr-2"></i> Play Again
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-4">
+        <div class="container mx-auto px-4 text-center">
+            <p>Made with <i class="fas fa-heart text-red-500"></i> for fun!</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Image data with names and descriptions
+            const imageData = [
+                {
+                    url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
+                    title: 'Mountain Lake',
+                    description: 'Serene alpine lake surrounded by majestic peaks'
+                },
+                {
+                    url: 'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5',
+                    title: 'Forest Path',
+                    description: 'Sunlit trail winding through ancient trees'
+                },
+                {
+                    url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05',
+                    title: 'Misty Valley',
+                    description: 'Early morning fog rolling over green hills'
+                },
+                {
+                    url: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d',
+                    title: 'Tropical Waterfall',
+                    description: 'Lush jungle waterfall cascading into crystal pool'
+                },
+                {
+                    url: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e',
+                    title: 'Cliffside Ocean',
+                    description: 'Dramatic coastal cliffs meeting turquoise waters'
+                },
+                {
+                    url: 'https://images.unsplash.com/photo-1426604966848-d7adac402bff',
+                    title: 'Sunset Fields',
+                    description: 'Golden hour over endless rolling meadows'
+                },
+                {
+                    url: 'https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f',
+                    title: 'Autumn Forest',
+                    description: 'Vibrant fall colors painting the woodland'
+                },
+                {
+                    url: 'https://images.unsplash.com/photo-1475924156734-496f6cac6ec1',
+                    title: 'Desert Dunes',
+                    description: 'Waves of sand sculpted by desert winds'
+                },
+                {
+                    url: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308',
+                    title: 'Mountain Village',
+                    description: 'Charming cottages nestled in snowy peaks'
+                },
+                {
+                    url: 'https://images.unsplash.com/photo-1510784722466-f2aa9c52fff6',
+                    title: 'Northern Lights',
+                    description: 'Dancing auroras over frozen landscape'
+                },
+                {
+                    url: 'https://images.unsplash.com/photo-1501854140801-50d01698950b',
+                    title: 'Coastal Sunrise',
+                    description: 'First light breaking over ocean horizon'
+                },
+                {
+                    url: 'https://images.unsplash.com/photo-1444464666168-49d633b86797',
+                    title: 'Wildflower Meadow',
+                    description: 'Colorful blooms stretching to the horizon'
+                },
+                {
+                    url: 'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07',
+                    title: 'Mountain Pass',
+                    description: 'Snow-capped peaks under clear blue sky'
+                },
+                {
+                    url: 'https://images.unsplash.com/photo-1429087969512-1e85aab2689d',
+                    title: 'Bamboo Forest',
+                    description: 'Sunlight filtering through towering bamboo'
+                },
+                {
+                    url: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9',
+                    title: 'Lakeside Sunset',
+                    description: 'Fiery skies reflected in calm waters'
+                }
+            ];
+
+            // Game state
+            let currentRound = 1;
+            const maxRounds = 10;
+            let score = 0;
+            let currentImages = [];
+            let winnerImage = null;
+
+            // DOM elements
+            const gameArea = document.getElementById('game-area');
+            const roundCount = document.getElementById('round-count');
+            const scoreDisplay = document.getElementById('score');
+            const progressBar = document.getElementById('progress-bar');
+            const winnerDisplay = document.getElementById('winner-display');
+            const finalWinnerImg = document.getElementById('final-winner-img');
+            const finalWinnerTitle = document.getElementById('final-winner-title');
+            const finalWinnerDesc = document.getElementById('final-winner-desc');
+            const playAgainBtn = document.getElementById('play-again');
+
+            // Initialize the game
+            initGame();
+
+            function initGame() {
+                currentRound = 1;
+                score = 0;
+                updateStats();
+                
+                // Shuffle and select initial images
+                const shuffled = [...imageData].sort(() => 0.5 - Math.random());
+                currentImages = shuffled.slice(0, 2);
+                
+                renderImages();
+            }
+
+            function renderImages() {
+                gameArea.innerHTML = '';
+                
+                currentImages.forEach((imgData, index) => {
+                    const imgContainer = document.createElement('div');
+                    imgContainer.className = `image-container bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition relative ${index === 0 ? 'mr-0 md:mr-3' : 'ml-0 md:ml-3'}`;
+                    
+                    const img = document.createElement('img');
+                    img.src = `${imgData.url}?w=600&h=600&fit=crop&auto=format`;
+                    img.alt = imgData.title;
+                    img.className = 'w-full h-64 md:h-80 object-cover';
+                    
+                    const overlay = document.createElement('div');
+                    overlay.className = 'image-title';
+                    
+                    const title = document.createElement('h3');
+                    title.className = 'text-xl font-bold';
+                    title.textContent = imgData.title;
+                    
+                    const desc = document.createElement('p');
+                    desc.className = 'image-description';
+                    desc.textContent = imgData.description;
+                    
+                    overlay.appendChild(title);
+                    overlay.appendChild(desc);
+                    imgContainer.appendChild(img);
+                    imgContainer.appendChild(overlay);
+                    
+                    imgContainer.addEventListener('click', () => selectImage(index));
+                    
+                    gameArea.appendChild(imgContainer);
+                });
+            }
+
+            function selectImage(index) {
+                // Highlight selected image
+                const containers = gameArea.querySelectorAll('.image-container');
+                containers.forEach(container => container.classList.remove('selected'));
+                containers[index].classList.add('selected');
+                
+                // Set winner and add animation
+                winnerImage = currentImages[index];
+                containers[index].classList.add('winner-animation');
+                
+                // Update score
+                score++;
+                updateStats();
+                
+                // Move to next round or end game
+                setTimeout(() => {
+                    if (currentRound < maxRounds) {
+                        nextRound();
+                    } else {
+                        endGame();
+                    }
+                }, 1000);
+            }
+
+            function nextRound() {
+                currentRound++;
+                updateStats();
+                
+                // Replace the non-selected image with a new one
+                const usedImages = [...currentImages.map(img => img.url), ...imageData.filter(img => currentImages.includes(img)).map(img => img.url)];
+                const availableImages = imageData.filter(img => !usedImages.includes(img.url));
+                
+                if (availableImages.length > 0) {
+                    const newImage = availableImages[Math.floor(Math.random() * availableImages.length)];
+                    currentImages = [winnerImage, newImage];
+                } else {
+                    // If we've run out of new images, just reuse some
+                    const randomImage = imageData[Math.floor(Math.random() * imageData.length)];
+                    currentImages = [winnerImage, randomImage];
+                }
+                
+                renderImages();
+            }
+
+            function endGame() {
+                gameArea.classList.add('hidden');
+                winnerDisplay.classList.remove('hidden');
+                finalWinnerImg.src = `${winnerImage.url}?w=600&h=600&fit=crop&auto=format`;
+                finalWinnerTitle.textContent = winnerImage.title;
+                finalWinnerDesc.textContent = winnerImage.description;
+            }
+
+            function updateStats() {
+                roundCount.textContent = currentRound;
+                scoreDisplay.textContent = score;
+                const progressPercent = (currentRound / maxRounds) * 100;
+                progressBar.style.width = `${progressPercent}%`;
+            }
+
+            // Play again button
+            playAgainBtn.addEventListener('click', function() {
+                winnerDisplay.classList.add('hidden');
+                gameArea.classList.remove('hidden');
+                initGame();
+            });
+        });
+    </script>
+</body>
+</html>
